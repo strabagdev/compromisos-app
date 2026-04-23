@@ -18,8 +18,12 @@ export default async function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#dbeafe,transparent_30%),linear-gradient(180deg,#f8fafc_0%,#eff6ff_100%)] px-6 py-10 text-slate-900">
-      <div className="mx-auto grid min-h-[calc(100vh-5rem)] w-full max-w-6xl gap-10 lg:grid-cols-[1.2fr_0.8fr]">
+    <main className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#eef6ff_100%)] px-6 py-10 text-slate-900">
+      <div className="absolute left-[-6rem] top-[-4rem] h-64 w-64 rounded-full bg-sky-200/60 blur-3xl" />
+      <div className="absolute bottom-[-5rem] right-[-4rem] h-72 w-72 rounded-full bg-cyan-200/60 blur-3xl" />
+      <div className="absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top,#bfdbfe,transparent_52%)]" />
+
+      <div className="relative mx-auto grid min-h-[calc(100vh-5rem)] w-full max-w-6xl gap-10 lg:grid-cols-[1.2fr_0.8fr]">
         <section className="flex flex-col justify-between rounded-[2rem] border border-white/70 bg-white/75 p-8 shadow-[0_30px_80px_rgba(15,23,42,0.08)] backdrop-blur md:p-10">
           <div className="space-y-8">
             <span className="inline-flex rounded-full bg-slate-900 px-4 py-1 text-sm font-medium text-white">
@@ -27,29 +31,18 @@ export default async function LoginPage() {
             </span>
             <div className="space-y-5">
               <h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-slate-950 md:text-6xl">
-                Ingresa a la base del sistema y empieza desde una pagina limpia.
+                Compromisos
               </h1>
-              <p className="max-w-2xl text-lg leading-8 text-slate-600">
-                Esta primera capa deja operativo el acceso, la solicitud de cuentas
-                y la administracion de usuarios para que el proyecto avance sin
-                mezclar todavia la logica de negocio.
+              <p className="max-w-xl text-base leading-7 text-slate-600">
+                Ingresa con tu cuenta o solicita acceso para empezar.
               </p>
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            <InfoCard
-              title="Login"
-              description="Ingreso con usuarios existentes en Supabase Auth."
-            />
-            <InfoCard
-              title="Solicitud"
-              description="Alta controlada de nuevas cuentas pendientes de aprobacion."
-            />
-            <InfoCard
-              title="Admin"
-              description="Gestion de roles, activacion y bloqueo interno."
-            />
+            <InfoCard title="Ingreso" description="Acceso con Supabase Auth." />
+            <InfoCard title="Solicitud" description="Alta con aprobacion interna." />
+            <InfoCard title="Base" description="Lista para montar negocio." />
           </div>
         </section>
 
@@ -58,8 +51,7 @@ export default async function LoginPage() {
             <div className="mb-8 space-y-2">
               <h2 className="text-2xl font-semibold text-slate-950">Ingresar</h2>
               <p className="text-sm leading-6 text-slate-600">
-                El acceso usa Supabase Auth. Las nuevas solicitudes quedan
-                pendientes hasta que un administrador apruebe su ingreso.
+                Usa tu cuenta o solicita acceso.
               </p>
             </div>
 

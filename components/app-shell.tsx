@@ -42,8 +42,8 @@ export function AppShell({
               </div>
             </div>
 
-            <div className="flex flex-col gap-2.5">
-              <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <nav className="flex flex-wrap items-center justify-end gap-2">
                 {navigation
                   .filter((item) => !item.adminOnly || user.role === UserRole.ADMIN)
                   .map((item) => {
@@ -65,22 +65,20 @@ export function AppShell({
                       </Link>
                     );
                   })}
-              </div>
+              </nav>
 
-              <div className="flex flex-wrap items-center justify-end gap-3">
-                {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
-                <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium leading-none text-white whitespace-nowrap">
-                  {user.name || user.email}
-                </span>
-                <form action={logoutAction} className="shrink-0">
-                  <button
-                    type="submit"
-                    className="whitespace-nowrap rounded-full border border-white/20 px-5 py-2.5 text-sm font-medium leading-none text-white transition hover:bg-white/10"
-                  >
-                    Cerrar sesion
-                  </button>
-                </form>
-              </div>
+              {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+              <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium leading-none text-white whitespace-nowrap">
+                {user.name || user.email}
+              </span>
+              <form action={logoutAction} className="shrink-0">
+                <button
+                  type="submit"
+                  className="whitespace-nowrap rounded-full border border-white/20 px-5 py-2.5 text-sm font-medium leading-none text-white transition hover:bg-white/10"
+                >
+                  Cerrar sesion
+                </button>
+              </form>
             </div>
           </div>
         </header>

@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { UserApprovalStatus, UserRole } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth";
-import { createUser, listUsersForAdmin, updateUserAdminState } from "@/lib/users";
+import {
+  createUser,
+  deleteUserFromPlatform,
+  listUsersForAdmin,
+  updateUserAdminState,
+} from "@/lib/users";
 
 function redirectWithMessage(type: "success" | "error", message: string): never {
   const params = new URLSearchParams({
@@ -16,7 +21,7 @@ function redirectWithMessage(type: "success" | "error", message: string): never 
 }
 
 export async function manageUserAction(formData: FormData) {
-  await requireAdmin();
+  const currentUser = await requireAdmin();
 
   const action = String(formData.get("action") ?? "").trim();
 
@@ -72,15 +77,22 @@ export async function manageUserAction(formData: FormData) {
     const approvalStatus = String(
       formData.get("approvalStatus") ?? UserApprovalStatus.PENDING,
     );
+    const temporaryPassword = String(formData.get("temporaryPassword") ?? "");
     const resolvedStatus =
       approvalStatus === UserApprovalStatus.APPROVED ||
       approvalStatus === UserApprovalStatus.REJECTED
         ? approvalStatus
         : UserApprovalStatus.PENDING;
 
-    await updateUserAdminState(userId, {
+    const result = await updateUserAdminState(userId, {
       approvalStatus: resolvedStatus,
+      ...(temporaryPassword ? { password: temporaryPassword } : {}),
     });
+
+    if (result?.status === "error") {
+      redirectWithMessage("error", result.message);
+    }
+
     revalidatePath("/admin/users");
     redirectWithMessage("success", "Estado de solicitud actualizado.");
   }
@@ -110,6 +122,17 @@ export async function manageUserAction(formData: FormData) {
 
     revalidatePath("/admin/users");
     redirectWithMessage("success", "Clave actualizada en Supabase.");
+  }
+
+  if (action === "delete-platform-user") {
+    const result = await deleteUserFromPlatform(userId, currentUser.id);
+
+    if (result.status === "error") {
+      redirectWithMessage("error", result.message);
+    }
+
+    revalidatePath("/admin/users");
+    redirectWithMessage("success", "Usuario eliminado de esta plataforma.");
   }
 
   redirectWithMessage("error", "Accion no soportada.");

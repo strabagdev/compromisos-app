@@ -10,12 +10,90 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
+async function findSupabaseAuthUserIdByEmail(email: string) {
+  const supabase = createSupabaseServiceClient();
+  const normalizedEmail = normalizeEmail(email);
+
+  for (let page = 1; page <= 10; page += 1) {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page,
+      perPage: 200,
+    });
+
+    if (error) {
+      return {
+        status: "error" as const,
+        message: "No se pudo consultar la cuenta en Supabase.",
+      };
+    }
+
+    const matched = data.users.find(
+      (candidate) => normalizeEmail(candidate.email ?? "") === normalizedEmail,
+    );
+
+    if (matched) {
+      return {
+        status: "success" as const,
+        authUserId: matched.id,
+      };
+    }
+
+    if (data.users.length < 200) {
+      return {
+        status: "success" as const,
+        authUserId: null,
+      };
+    }
+  }
+
+  return {
+    status: "success" as const,
+    authUserId: null,
+  };
+}
+
 export async function listUsersForAdmin() {
   const prisma = getPrisma();
 
   return prisma.user.findMany({
     orderBy: [{ role: "asc" }, { name: "asc" }],
   });
+}
+
+export async function deleteUserFromPlatform(userId: string, currentUserId: string) {
+  if (userId === currentUserId) {
+    return {
+      status: "error" as const,
+      message: "No puedes eliminar tu propio acceso desde esta pantalla.",
+    };
+  }
+
+  const prisma = getPrisma();
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!user) {
+    return {
+      status: "error" as const,
+      message: "Usuario no encontrado.",
+    };
+  }
+
+  await prisma.user.delete({
+    where: {
+      id: userId,
+    },
+  });
+
+  return {
+    status: "success" as const,
+  };
 }
 
 export async function createUser(input: {
@@ -104,21 +182,105 @@ export async function updateUserAdminState(
   },
 ) {
   const prisma = getPrisma();
+  const data: {
+    active?: boolean;
+    role?: UserRole;
+    approvalStatus?: UserApprovalStatus;
+    authUserId?: string;
+  } = {};
 
-  if (typeof input.active === "boolean" || input.role || input.approvalStatus) {
+  if (input.approvalStatus === UserApprovalStatus.APPROVED) {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        authUserId: true,
+        email: true,
+        name: true,
+      },
+    });
+
+    if (!user) {
+      return {
+        status: "error" as const,
+        message: "Usuario no encontrado.",
+      };
+    }
+
+    if (!user.authUserId) {
+      const matched = await findSupabaseAuthUserIdByEmail(user.email);
+
+      if (matched.status === "error") {
+        return matched;
+      }
+
+      if (matched.authUserId) {
+        data.authUserId = matched.authUserId;
+      } else {
+        if (!input.password) {
+          return {
+            status: "error" as const,
+            message: "Ingresa una contrasena temporal para crear la cuenta en Supabase.",
+          };
+        }
+
+        if (input.password.length < 8) {
+          return {
+            status: "error" as const,
+            message: "La contrasena temporal debe tener al menos 8 caracteres.",
+          };
+        }
+
+        const supabase = createSupabaseServiceClient();
+        const { data: createdAuthUser, error } = await supabase.auth.admin.createUser({
+          email: user.email,
+          password: input.password,
+          email_confirm: true,
+          user_metadata: {
+            name: user.name,
+          },
+        });
+
+        if (error || !createdAuthUser.user) {
+          return {
+            status: "error" as const,
+            message: "No se pudo crear la cuenta en Supabase.",
+          };
+        }
+
+        data.authUserId = createdAuthUser.user.id;
+      }
+    }
+  }
+
+  if (typeof input.active === "boolean") {
+    data.active = input.active;
+  }
+
+  if (input.role) {
+    data.role = input.role;
+  }
+
+  if (input.approvalStatus) {
+    data.approvalStatus = input.approvalStatus;
+  }
+
+  if (
+    typeof data.active === "boolean" ||
+    data.role ||
+    data.approvalStatus ||
+    data.authUserId
+  ) {
     await prisma.user.update({
       where: {
         id: userId,
       },
-      data: {
-        ...(typeof input.active === "boolean" ? { active: input.active } : {}),
-        ...(input.role ? { role: input.role } : {}),
-        ...(input.approvalStatus ? { approvalStatus: input.approvalStatus } : {}),
-      },
+      data,
     });
   }
 
-  if (input.password) {
+  if (input.password && input.approvalStatus !== UserApprovalStatus.APPROVED) {
     const supabase = createSupabaseServiceClient();
     const user = await prisma.user.findUnique({
       where: {

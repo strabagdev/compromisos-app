@@ -60,31 +60,16 @@ export async function requestAccessAction(
 ): Promise<RequestAccessActionState> {
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
-  const confirmPassword = String(formData.get("confirmPassword") ?? "");
 
-  if (!name || !email || !password || !confirmPassword) {
+  if (!name || !email) {
     return {
-      error: "Completa nombre, correo y ambas contrasenas.",
-    };
-  }
-
-  if (password !== confirmPassword) {
-    return {
-      error: "Las contrasenas no coinciden.",
-    };
-  }
-
-  if (password.length < 8) {
-    return {
-      error: "La contrasena debe tener al menos 8 caracteres.",
+      error: "Completa nombre y correo.",
     };
   }
 
   const result = await requestAccess({
     name,
     email,
-    password,
   });
 
   if (result.status === "email-exists") {

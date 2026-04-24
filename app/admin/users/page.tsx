@@ -120,10 +120,19 @@ export default async function AdminUsersPage({
                     >
                       {resolveApprovalStatusLabel(account.approvalStatus)}
                     </span>
+                    <span
+                      className={`rounded-full px-3 py-1 ${
+                        account.authUserId
+                          ? "bg-sky-100 text-sky-700"
+                          : "bg-slate-200 text-slate-700"
+                      }`}
+                    >
+                      {account.authUserId ? "Auth vinculado" : "Auth pendiente"}
+                    </span>
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-3 lg:grid-cols-4">
+                <div className="mt-4 grid gap-3 lg:grid-cols-5">
                   <form action={manageUserAction} className="rounded-2xl bg-white p-4">
                     <input type="hidden" name="action" value="update-approval-status" />
                     <input type="hidden" name="userId" value={account.id} />
@@ -139,6 +148,17 @@ export default async function AdminUsersPage({
                       <option value={UserApprovalStatus.APPROVED}>Aprobado</option>
                       <option value={UserApprovalStatus.REJECTED}>Rechazado</option>
                     </select>
+                    {!account.authUserId ? (
+                      <input
+                        name="temporaryPassword"
+                        type="password"
+                        aria-label="Contrasena temporal para crear cuenta en Supabase"
+                        placeholder="Clave temporal si apruebas"
+                        minLength={8}
+                        autoComplete="new-password"
+                        className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0369a1] focus:ring-4 focus:ring-[#bfdbfe]"
+                      />
+                    ) : null}
                     <button
                       type="submit"
                       className="mt-3 w-full rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-950"
@@ -210,6 +230,23 @@ export default async function AdminUsersPage({
                       className="mt-3 w-full rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-950"
                     >
                       Actualizar clave
+                    </button>
+                  </form>
+
+                  <form action={manageUserAction} className="rounded-2xl bg-white p-4">
+                    <input type="hidden" name="action" value="delete-platform-user" />
+                    <input type="hidden" name="userId" value={account.id} />
+                    <label className="block text-xs font-medium uppercase tracking-[0.15em] text-slate-400">
+                      Plataforma
+                    </label>
+                    <p className="mt-3 text-sm leading-7 text-slate-600">
+                      Quita este acceso sin borrar la cuenta compartida de Supabase Auth.
+                    </p>
+                    <button
+                      type="submit"
+                      className="mt-3 w-full rounded-full border border-rose-200 px-4 py-2 text-sm font-medium text-rose-700 transition hover:border-rose-500 hover:text-rose-800"
+                    >
+                      Eliminar acceso
                     </button>
                   </form>
                 </div>

@@ -117,58 +117,93 @@ async function syncInternalUser(authUser: { id: string; email?: string | null; u
     },
   });
 
-  const user = existingUser
-    ? await prisma.user.update({
-        where: {
-          id: existingUser.id,
-        },
-        data: {
-          authUserId: existingUser.authUserId ?? authUser.id,
-          email,
-          name: existingUser.name || metadataName,
-          role:
-            existingUser.role === UserRole.ADMIN || bootstrapAdminEmail !== email
-              ? existingUser.role
-              : UserRole.ADMIN,
-          approvalStatus:
-            existingUser.approvalStatus === UserApprovalStatus.REJECTED
-              ? UserApprovalStatus.REJECTED
-              : bootstrapAdminEmail === email
-                ? UserApprovalStatus.APPROVED
-                : existingUser.approvalStatus,
-        },
-      })
-    : await prisma.user.create({
-        data: {
-          authUserId: authUser.id,
-          email,
-          name: metadataName,
-          passwordHash: hashPassword(randomUUID()),
-          role: bootstrapAdminEmail === email ? UserRole.ADMIN : UserRole.VIEWER,
-          approvalStatus:
-            bootstrapAdminEmail === email
-              ? UserApprovalStatus.APPROVED
-              : UserApprovalStatus.PENDING,
-          active: true,
-        },
-      });
+  const user =
+    existingUser ??
+    (bootstrapAdminEmail === email
+      ? await prisma.user.create({
+          data: {
+            authUserId: authUser.id,
+            email,
+            name: metadataName,
+            passwordHash: hashPassword(randomUUID()),
+            role: UserRole.ADMIN,
+            approvalStatus: UserApprovalStatus.APPROVED,
+            active: true,
+          },
+        })
+      : null);
 
-  if (!user.active) {
+  if (!user) {
     return { status: "inactive" as const };
   }
 
-  if (user.approvalStatus === UserApprovalStatus.PENDING) {
+  const syncedUser = await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      authUserId: user.authUserId ?? authUser.id,
+      email,
+      name: user.name || metadataName,
+      role:
+        user.role === UserRole.ADMIN || bootstrapAdminEmail !== email
+          ? user.role
+          : UserRole.ADMIN,
+      approvalStatus:
+        user.approvalStatus === UserApprovalStatus.REJECTED
+          ? UserApprovalStatus.REJECTED
+          : bootstrapAdminEmail === email
+            ? UserApprovalStatus.APPROVED
+            : user.approvalStatus,
+    },
+  });
+
+  if (!syncedUser.active) {
+    return { status: "inactive" as const };
+  }
+
+  if (syncedUser.approvalStatus === UserApprovalStatus.PENDING) {
     return { status: "pending" as const };
   }
 
-  if (user.approvalStatus === UserApprovalStatus.REJECTED) {
+  if (syncedUser.approvalStatus === UserApprovalStatus.REJECTED) {
     return { status: "rejected" as const };
   }
 
   return {
     status: "approved" as const,
-    user: toAuthUser(user),
+    user: toAuthUser(syncedUser),
   };
+}
+
+async function findSupabaseAuthUserIdByEmail(email: string) {
+  const supabase = createSupabaseServiceClient();
+  const normalizedEmail = normalizeEmail(email);
+
+  for (let page = 1; page <= 10; page += 1) {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page,
+      perPage: 200,
+    });
+
+    if (error) {
+      return null;
+    }
+
+    const matched = data.users.find(
+      (candidate) => normalizeEmail(candidate.email ?? "") === normalizedEmail,
+    );
+
+    if (matched) {
+      return matched.id;
+    }
+
+    if (data.users.length < 200) {
+      return null;
+    }
+  }
+
+  return null;
 }
 
 export async function deleteSession() {
@@ -254,10 +289,8 @@ export async function requireAdmin() {
 export async function requestAccess(input: {
   name: string;
   email: string;
-  password: string;
 }): Promise<RequestAccessResult> {
   const prisma = getPrisma();
-  const supabase = createSupabaseServiceClient();
   const email = normalizeEmail(input.email);
   const existingUser = await prisma.user.findUnique({
     where: {
@@ -271,30 +304,12 @@ export async function requestAccess(input: {
     };
   }
 
-  let createdAuthUserId: string | null = null;
+  const authUserId = await findSupabaseAuthUserIdByEmail(email);
 
   try {
-    const { data: createdAuthUser, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      password: input.password,
-      email_confirm: true,
-      user_metadata: {
-        name: input.name.trim(),
-      },
-    });
-
-    if (authError || !createdAuthUser.user) {
-      return {
-        status: "error",
-        message: "No se pudo crear la cuenta en Supabase. Revisa si el correo ya existe.",
-      };
-    }
-
-    createdAuthUserId = createdAuthUser.user.id;
-
     await prisma.user.create({
       data: {
-        authUserId: createdAuthUserId,
+        authUserId,
         name: input.name.trim(),
         email,
         passwordHash: hashPassword(randomUUID()),
@@ -308,10 +323,6 @@ export async function requestAccess(input: {
       status: "success",
     };
   } catch {
-    if (createdAuthUserId) {
-      await supabase.auth.admin.deleteUser(createdAuthUserId).catch(() => undefined);
-    }
-
     return {
       status: "error",
       message: "No se pudo registrar la solicitud. Revisa si el correo ya existe.",

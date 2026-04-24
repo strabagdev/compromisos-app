@@ -94,8 +94,8 @@ export function LoginForm() {
       ) : (
         <div className="space-y-5">
           <p className="text-sm leading-6 text-slate-600">
-            Registra tu solicitud. La cuenta quedara creada y un administrador
-            debera aprobarla antes de que puedas ingresar.
+            Registra tu solicitud. Si ya tienes cuenta en otra plataforma,
+            usaras tu contrasena actual cuando un administrador apruebe el acceso.
           </p>
 
           <form action={requestFormAction} className="space-y-5">
@@ -114,24 +114,6 @@ export function LoginForm() {
               autoComplete="email"
               placeholder="usuario@empresa.cl"
             />
-            <div className="grid gap-5 md:grid-cols-2">
-              <Field
-                id="request-password"
-                label="Contrasena"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                placeholder="Minimo 8 caracteres"
-              />
-              <Field
-                id="request-confirm-password"
-                label="Confirmar contrasena"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                placeholder="Repite la contrasena"
-              />
-            </div>
 
             {requestState.error ? (
               <p

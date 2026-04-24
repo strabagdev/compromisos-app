@@ -3,10 +3,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Compromisos",
+    default: "Plantilla de Acceso",
     template: "%s",
   },
-  description: "Base de acceso para la plataforma de compromisos.",
+  description: "Plantilla base para autenticacion, solicitudes de acceso y administracion de usuarios.",
 };
 
 export default function RootLayout({

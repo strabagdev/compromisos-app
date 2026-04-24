@@ -63,7 +63,7 @@ export function LoginForm() {
             name="email"
             type="email"
             autoComplete="email"
-            placeholder="admin@empresa.cl"
+            placeholder="admin@ejemplo.com"
           />
           <Field
             id="password"
@@ -112,7 +112,7 @@ export function LoginForm() {
               name="email"
               type="email"
               autoComplete="email"
-              placeholder="usuario@empresa.cl"
+              placeholder="usuario@ejemplo.com"
             />
 
             {requestState.error ? (

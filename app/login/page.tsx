@@ -4,8 +4,8 @@ import { LoginForm } from "@/components/login-form";
 import { getCurrentUser } from "@/lib/auth";
 
 export const metadata: Metadata = {
-  title: "Ingreso | Compromisos",
-  description: "Acceso a la plataforma de compromisos.",
+  title: "Ingreso | Plantilla de Acceso",
+  description: "Acceso a la aplicacion base.",
 };
 
 export const dynamic = "force-dynamic";
@@ -27,14 +27,14 @@ export default async function LoginPage() {
         <section className="flex flex-col justify-between rounded-[2rem] border border-white/70 bg-white/75 p-8 shadow-[0_30px_80px_rgba(15,23,42,0.08)] backdrop-blur md:p-10">
           <div className="space-y-8">
             <span className="inline-flex rounded-full bg-slate-900 px-4 py-1 text-sm font-medium text-white">
-              Plataforma de Compromisos
+              Plantilla de Acceso
             </span>
             <div className="space-y-5">
               <h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-slate-950 md:text-6xl">
-                Compromisos
+                Base lista para tu aplicacion
               </h1>
               <p className="max-w-xl text-base leading-7 text-slate-600">
-                Ingresa con tu cuenta o solicita acceso para empezar.
+                Ingresa con tu cuenta o solicita acceso para comenzar.
               </p>
             </div>
           </div>
@@ -42,7 +42,7 @@ export default async function LoginPage() {
           <div className="grid gap-4 md:grid-cols-3">
             <InfoCard title="Ingreso" description="Acceso con Supabase Auth." />
             <InfoCard title="Solicitud" description="Alta con aprobacion interna." />
-            <InfoCard title="Base" description="Lista para montar negocio." />
+            <InfoCard title="Base" description="Lista para adaptar a tu producto." />
           </div>
         </section>
 

@@ -7,7 +7,7 @@ import { requireAdmin } from "@/lib/auth";
 import { listUsersForAdmin } from "@/lib/users";
 
 export const metadata: Metadata = {
-  title: "Usuarios | Compromisos",
+  title: "Usuarios | Plantilla de Acceso",
   description: "Administracion de accesos y usuarios.",
 };
 
@@ -52,7 +52,7 @@ export default async function AdminUsersPage({
           <form action={manageUserAction} className="space-y-5">
             <input type="hidden" name="action" value="create" />
             <Field label="Nombre" name="name" placeholder="Nombre completo" />
-            <Field label="Correo" name="email" placeholder="usuario@empresa.cl" />
+            <Field label="Correo" name="email" placeholder="usuario@ejemplo.com" />
             <Field
               label="Contrasena inicial"
               name="password"
